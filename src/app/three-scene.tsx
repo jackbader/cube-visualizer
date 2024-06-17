@@ -75,7 +75,7 @@ const ThreeScene = () => {
           const data = analyserRef.current.getAverageFrequency();
           console.log('Analyser data:', data);
 
-          if (data > 140) {
+          if (data > 120) {
             // Change cube rotation based on audio data
             cube.rotation.x += 0.01 + data / 1000;
             cube.rotation.y += 0.01 + data / 1000;
