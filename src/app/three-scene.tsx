@@ -27,10 +27,13 @@ const ThreeScene = () => {
       mount.appendChild(renderer.domElement);
 
       // Example geometry and material
-      const geometry = new THREE.BoxGeometry();
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      const cube = new THREE.Mesh(geometry, material);
-      scene.add(cube);
+      const geometry = new THREE.SphereGeometry(1, 32, 32);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+      });
+      const sphere = new THREE.Mesh(geometry, material);
+      scene.add(sphere);
 
       camera.position.z = 5;
 
@@ -75,18 +78,27 @@ const ThreeScene = () => {
           const data = analyserRef.current.getAverageFrequency();
           console.log('Analyser data:', data);
 
-          if (data > 120) {
-            // Change cube rotation based on audio data
-            cube.rotation.x += 0.01 + data / 1000;
-            cube.rotation.y += 0.01 + data / 1000;
+          if (data > 100) {
+            // Warp the sphere vertices based on audio data
+            const scale = 1 + data / 256;
+            sphere.scale.set(scale, scale, scale);
+
+            const positionAttribute = sphere.geometry.attributes.position;
+            const vertex = new THREE.Vector3();
+            for (let i = 0; i < positionAttribute.count; i++) {
+              vertex.fromBufferAttribute(positionAttribute, i);
+              const offset = (data / 256) * 0.5;
+              vertex.normalize().multiplyScalar(1 + offset);
+              positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+            }
+            positionAttribute.needsUpdate = true;
+          } else {
+            sphere.scale.set(1, 1, 1);
           }
 
-          // Change cube color based on audio data
+          // Change sphere color based on audio data
           const colorValue = (data / 256) * 0xffffff; // Normalize data to fit in hex color range
-          cube.material.color.setHex(colorValue);
-        } else {
-          cube.rotation.x += 0.01;
-          cube.rotation.y += 0.01;
+          sphere.material.color.setHex(colorValue);
         }
 
         renderer.render(scene, camera);
